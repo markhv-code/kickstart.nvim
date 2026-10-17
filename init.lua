@@ -389,6 +389,30 @@ require('lazy').setup({
         ---@type render.md.UserConfig
         opts = {},
       },
+      -- Auto-close brackets, parens, quotes, etc.
+      {
+        'windwp/nvim-autopairs',
+        event = 'InsertEnter',
+        opts = {
+          check_ts = true, -- Enable treesitter integration to avoid pairing inside strings/comments
+        },
+      },
+      -- Visual indentation and scope guides
+      {
+        'lukas-reineke/indent-blankline.nvim',
+        main = 'ibl',
+        opts = {
+          indent = {
+            char = '│',
+            tab_char = '│',
+          },
+          scope = {
+            enabled = true,
+            show_start = true,
+            show_end = false,
+          },
+        },
+      },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -680,7 +704,22 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {
+          cmd = {
+            'clangd',
+            '--background-index',
+            '--clang-tidy',
+            '--header-insertion=iwyu',
+            '--completion-style=detailed',
+            '--function-arg-placeholders',
+            '--fallback-style=llvm',
+          },
+          init_options = {
+            usePlaceholders = true,
+            completeUnimported = true,
+            clangdFileStatus = true,
+          },
+        },
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -732,6 +771,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'clang-format', -- Formatter for C/C++
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -784,6 +824,8 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        c = { 'clang-format' },
+        cpp = { 'clang-format' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
